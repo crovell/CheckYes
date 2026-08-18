@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Question for You ✨</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blush:    #F2C4CE;
+    --rose:     #C97D8A;
+    --deep:     #4A2933;
+    --cream:    #FEF6F0;
+    --gold:     #D4A853;
+    --mist:     #F7EEF5;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--cream);
+    font-family: 'Lato', sans-serif;
+    overflow: hidden;
+  }
+
+  /* Floating hearts background */
+  .hearts-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .heart {
+    position: absolute;
+    bottom: -60px;
+    font-size: 1.2rem;
+    opacity: 0;
+    animation: floatUp linear infinite;
+  }
+
+  @keyframes floatUp {
+    0%   { transform: translateY(0) scale(0.8) rotate(-10deg); opacity: 0; }
+    10%  { opacity: 0.35; }
+    90%  { opacity: 0.25; }
+    100% { transform: translateY(-110vh) scale(1.1) rotate(10deg); opacity: 0; }
+  }
+
+  /* Main card */
+  .card {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .envelope-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
+    animation: sway 3s ease-in-out infinite;
+  }
+  @keyframes sway {
+    0%, 100% { transform: rotate(-4deg) scale(1); }
+    50%       { transform: rotate(4deg) scale(1.08); }
+  }
+
+  .tag {
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--rose);
+    margin-bottom: 0.75rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 6vw, 3.6rem);
+    color: var(--deep);
+    line-height: 1.15;
+    margin-bottom: 0.5rem;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--rose);
+  }
+
+  .divider {
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 1.4rem auto;
+  }
+
+  .teaser {
+    font-size: 1.05rem;
+    color: var(--deep);
+    opacity: 0.75;
+    max-width: 400px;
+    line-height: 1.7;
+    font-weight: 300;
+    margin-bottom: 0.4rem;
+  }
+  .teaser strong {
+    font-weight: 400;
+    color: var(--deep);
+    opacity: 1;
+  }
+
+  .hint {
+    font-size: 0.8rem;
+    color: var(--rose);
+    opacity: 0.7;
+    margin-bottom: 2.4rem;
+    font-style: italic;
+  }
+
+  /* Buttons */
+  .buttons {
+    display: flex;
+    gap: 1.4rem;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-yes {
+    background: linear-gradient(135deg, var(--rose), #a85c6e);
+    color: #fff;
+    border: none;
+    padding: 0.9rem 2.6rem;
+    border-radius: 50px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 6px 24px rgba(201,125,138,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    z-index: 20;
+  }
+  .btn-yes:hover {
+    transform: translateY(-3px) scale(1.04);
+    box-shadow: 0 10px 30px rgba(201,125,138,0.5);
+  }
+  .btn-yes:active {
+    transform: scale(0.97);
+  }
+
+  .btn-no {
+    background: transparent;
+    color: var(--deep);
+    border: 1.5px solid var(--blush);
+    padding: 0.85rem 2rem;
+    border-radius: 50px;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 300;
+    cursor: pointer;
+    position: fixed; /* fixed so it can escape anywhere */
+    z-index: 20;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  /* YES screen */
+  .yes-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--mist);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    animation: fadeIn 0.6s ease;
+  }
+  .yes-screen.show { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .yes-emoji { font-size: 4rem; margin-bottom: 1.2rem; animation: pop 0.5s ease; }
+  @keyframes pop {
+    0%   { transform: scale(0); }
+    70%  { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+
+  .yes-screen h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    color: var(--deep);
+    margin-bottom: 0.6rem;
+  }
+  .yes-screen h2 em { color: var(--rose); font-style: italic; }
+
+  .yes-screen p {
+    font-size: 1rem;
+    color: var(--deep);
+    opacity: 0.7;
+    max-width: 360px;
+    line-height: 1.75;
+    font-weight: 300;
+    margin-top: 0.5rem;
+  }
+
+  .yes-screen .detail {
+    margin-top: 1.8rem;
+    background: white;
+    border-radius: 20px;
+    padding: 0;
+    box-shadow: 0 6px 32px rgba(74,41,51,0.10);
+    font-size: 0.88rem;
+    color: var(--deep);
+    line-height: 1.85;
+    max-width: 360px;
+    width: 100%;
+    overflow: hidden;
+  }
+  .detail-header {
+    background: linear-gradient(135deg, var(--rose), #a85c6e);
+    color: white;
+    padding: 1rem 1.6rem 0.8rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .detail-body {
+    padding: 1.2rem 1.6rem 1.4rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem 1.4rem;
+  }
+  .detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .detail-item .label {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--rose);
+    font-weight: 400;
+  }
+  .detail-item .value {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.92rem;
+    color: var(--deep);
+    line-height: 1.4;
+  }
+  .detail-note {
+    grid-column: 1 / -1;
+    font-size: 0.78rem;
+    color: var(--deep);
+    opacity: 0.6;
+    font-style: italic;
+    border-top: 1px solid var(--blush);
+    padding-top: 0.8rem;
+    margin-top: 0.2rem;
+  }
+
+  .confetti-burst {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 110;
+  }
+</style>
+</head>
+<body>
+
+<!-- Floating hearts -->
+<div class="hearts-bg" id="heartsBg"></div>
+
+<!-- Main card -->
+<div class="card" id="mainCard">
+  <div class="envelope-icon">💌</div>
+  <p class="tag">A little something from your husband</p>
+  <h1>Would you like to go on an<br><em>early anniversary date?</em></h1>
+  <div class="divider"></div>
+  <p class="teaser">
+    I've planned something special for <strong>October 14th</strong>.<br>
+    An overnight escape, just the two of us.
+  </p>
+  <p class="hint">(Details revealed upon acceptance of terms &amp; conditions)</p>
+
+  <div class="buttons">
+    <button class="btn-yes" id="btnYes">Yes, absolutely ✨</button>
+    <button class="btn-no" id="btnNo">No thanks</button>
+  </div>
+</div>
+
+<!-- YES screen -->
+<div class="yes-screen" id="yesScreen">
+  <div class="yes-emoji">🥂</div>
+  <h2>It's a date,<br><em>my love.</em></h2>
+  <p>I can't wait to celebrate us.</p>
+  <div class="detail">
+    <div class="detail-header">Your itinerary 🤍</div>
+    <div class="detail-body">
+      <div class="detail-item">
+        <span class="label">Date</span>
+        <span class="value">October 14th</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Destination</span>
+        <span class="value">Ojai, CA</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Concert</span>
+        <span class="value">Jacob Collier — Live</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Staying at</span>
+        <span class="value">The Lavender Inn</span>
+      </div>
+      <div class="detail-item" style="grid-column: 1 / -1;">
+        <span class="label">Our Room</span>
+        <span class="value">The Topa — private balcony with views of the Topa Topas mountains &amp; the famous Pink Moment sunset 🌅</span>
+      </div>
+      <p class="detail-note">Just the two of us. Happy early anniversary, my love.</p>
+    </div>
+  </div>
+</div>
+
+<canvas class="confetti-burst" id="confettiCanvas"></canvas>
+
+<script>
+  // --- Floating hearts ---
+  const heartsBg = document.getElementById('heartsBg');
+  const heartChars = ['♡','♥','✦','✿','❀','✩'];
+  for (let i = 0; i < 22; i++) {
+    const h = document.createElement('span');
+    h.className = 'heart';
+    h.textContent = heartChars[Math.floor(Math.random() * heartChars.length)];
+    h.style.left = Math.random() * 100 + 'vw';
+    h.style.fontSize = (0.7 + Math.random() * 1.2) + 'rem';
+    h.style.color = ['#F2C4CE','#C97D8A','#D4A853','#a85c6e'][Math.floor(Math.random()*4)];
+    const dur = 8 + Math.random() * 12;
+    h.style.animationDuration = dur + 's';
+    h.style.animationDelay = -(Math.random() * dur) + 's';
+    heartsBg.appendChild(h);
+  }
+
+  // --- Dodging NO button ---
+  const btnNo  = document.getElementById('btnNo');
+  const btnYes = document.getElementById('btnYes');
+
+  // Place the No button initially next to Yes
+  function placeNoNearYes() {
+    const yr = btnYes.getBoundingClientRect();
+    btnNo.style.top  = yr.top + 'px';
+    btnNo.style.left = (yr.right + 20) + 'px';
+  }
+  placeNoNearYes();
+  window.addEventListener('resize', placeNoNearYes);
+
+  const FLEE_RADIUS = 100; // px — how close before it runs
+
+  function randomEdge() {
+    // Pick a random position well away from center, but within viewport
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const bw = btnNo.offsetWidth  || 120;
+    const bh = btnNo.offsetHeight || 48;
+    // bias toward edges
+    const side = Math.floor(Math.random() * 4);
+    let x, y;
+    if (side === 0) { x = Math.random() * (W - bw);        y = 10; }
+    else if (side === 1) { x = W - bw - 10;                y = Math.random() * (H - bh); }
+    else if (side === 2) { x = Math.random() * (W - bw);   y = H - bh - 10; }
+    else { x = 10;                                          y = Math.random() * (H - bh); }
+    return { x, y };
+  }
+
+  function fleeTo(x, y) {
+    btnNo.style.transition = 'top 0.18s cubic-bezier(.4,0,.2,1), left 0.18s cubic-bezier(.4,0,.2,1)';
+    btnNo.style.top  = y + 'px';
+    btnNo.style.left = x + 'px';
+  }
+
+  document.addEventListener('mousemove', (e) => {
+    const r = btnNo.getBoundingClientRect();
+    const cx = r.left + r.width  / 2;
+    const cy = r.top  + r.height / 2;
+    const dx = e.clientX - cx;
+    const dy = e.clientY - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < FLEE_RADIUS) {
+      const pos = randomEdge();
+      fleeTo(pos.x, pos.y);
+    }
+  });
+
+  // Touch support: dodge on touchmove
+  document.addEventListener('touchmove', (e) => {
+    const t = e.touches[0];
+    const r = btnNo.getBoundingClientRect();
+    const cx = r.left + r.width  / 2;
+    const cy = r.top  + r.height / 2;
+    const dx = t.clientX - cx;
+    const dy = t.clientY - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < FLEE_RADIUS * 1.5) {
+      const pos = randomEdge();
+      fleeTo(pos.x, pos.y);
+    }
+  }, { passive: true });
+
+  // Clicking No does nothing fun (just moves it again)
+  btnNo.addEventListener('click', () => {
+    const pos = randomEdge();
+    fleeTo(pos.x, pos.y);
+  });
+
+  // --- YES handler + confetti ---
+  btnYes.addEventListener('click', () => {
+    document.getElementById('mainCard').style.display = 'none';
+    document.getElementById('yesScreen').classList.add('show');
+    launchConfetti();
+  });
+
+  function launchConfetti() {
+    const canvas = document.getElementById('confettiCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ['#F2C4CE','#C97D8A','#D4A853','#a85c6e','#ffffff','#4A2933'];
+    const particles = Array.from({ length: 160 }, () => ({
+      x: Math.random() * canvas.width,
+      y: -20,
+      r: 4 + Math.random() * 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      speed: 2.5 + Math.random() * 4,
+      drift: (Math.random() - 0.5) * 2.5,
+      rot:   Math.random() * Math.PI * 2,
+      rotS:  (Math.random() - 0.5) * 0.15,
+      shape: Math.random() > 0.5 ? 'rect' : 'circle',
+    }));
+
+    let frame = 0;
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.y   += p.speed;
+        p.x   += p.drift;
+        p.rot += p.rotS;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        if (p.shape === 'circle') {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
+        }
+        ctx.restore();
+      });
+      frame++;
+      if (frame < 220) requestAnimationFrame(draw);
+      else ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    draw();
+  }
+</script>
+</body>
+</html>
