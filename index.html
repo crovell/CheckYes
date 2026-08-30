@@ -1037,6 +1037,24 @@
     text-align: center;
     line-height: 1.6;
   }
+  .fine-note {
+    display: block;
+    margin-top: 0.42rem;
+    padding-top: 0.4rem;
+    border-top: 1px dashed rgba(184,92,56,0.3);
+    color: var(--terra-deep);
+    font-style: italic;
+    letter-spacing: 0.01em;
+    line-height: 1.65;
+    opacity: 0.95;
+  }
+  .fine-note b {
+    font-style: normal;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+
   .barcode {
     display: flex; gap: 1px;
     justify-content: center;
@@ -1738,6 +1756,11 @@
         Void where prohibited. Must be 18 or married to Chris to play.<br>
         Not redeemable for cash. Redeemable only for affection.<br>
         Ticket has no cash value. Please play responsibly.
+        <span class="fine-note">
+          Your number is 12 because that&rsquo;s the anniversary we&rsquo;re about
+          to have. Twelve years, this November 22nd.<br>
+          <b>Not a lucky number. Ours.</b>
+        </span>
       </div>
 
       <div class="barcode" id="barcode"></div>
@@ -2687,12 +2710,6 @@
         <span class="label">The kids</span>
         <span class="value">Jamma has it covered 🙌</span>
       </div>
-      <div class="detail-item" style="grid-column: 1 / -1;">
-        <span class="label">Why 12?</span>
-        <span class="value">Twelve years, this November 22nd.</span>
-        <span class="value-fine">Not a lucky number. Ours.</span>
-      </div>
-      <p class="detail-note">Just the two of us. Happy early anniversary, lovely.</p>
     </div>
   </div>
 </div>
@@ -2998,23 +3015,23 @@ document.getElementById('memContinue').addEventListener('click', () => {
 /* ── the five places, in the order they happened ── */
 const MAP_STOPS = [
   { lat: 33.6597, lon: -117.7362, name: 'Irvine Meadows, CA',
-    q: "The July 2008 concert that led to our first <em>I love you</em>",
+    q: "The July 2008 concert that led to our first I love you",
     hint: 'Southern California. Orange County.' },
 
   { lat: 43.6591, lon: -70.2568,  name: 'Portland, Maine',
-    q: 'Where we started our <em>honeymoon</em>',
+    q: 'Where we started our honeymoon',
     hint: 'Far northeast. As far up the coast as you can get.' },
 
   { lat: 45.5152, lon: -122.6784, name: 'Portland, Oregon',
-    q: 'August 2015 — <em>Voodoo Doughnut</em>, and keeping it weird',
+    q: 'August 2015 trip, known for Voodoo Doughnut and keeping it weird',
     hint: 'Pacific Northwest. Yes, the other Portland.' },
 
   { lat: 37.0965, lon: -113.5684, name: 'St. George, Utah',
-    q: 'Our cold, dark halfway stop on the way to <em>the snow</em>, Dec 2022',
+    q: 'Our cold, dark halfway stop on the way to the snow, Dec 2022',
     hint: 'Southwest Utah, just over the Arizona line.' },
 
   { lat: 34.1064, lon: -110.9448, name: 'Young, Arizona',
-    q: 'Where we went in July 2023 to say goodbye to <em>Mema</em>',
+    q: 'Where we went in July 2023 to say goodbye to Mema',
     hint: 'Central Arizona, up in the Rim country.' },
 ];
 
