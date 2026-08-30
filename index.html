@@ -1465,6 +1465,45 @@
   #audioToggle.muted .off-slash { display: block; }
   #audioToggle.muted .wave { display: none; }
 
+  /* ══ DEV JUMP BAR — only appears with ?dev in the URL ══ */
+  #devBar {
+    position: fixed;
+    left: 50%; bottom: 10px;
+    transform: translateX(-50%);
+    z-index: 999;
+    display: none;
+    gap: 4px;
+    padding: 5px 7px;
+    background: rgba(46,42,34,0.9);
+    border-radius: 6px;
+    font-family: ui-monospace, Menlo, monospace;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 94vw;
+  }
+  #devBar.on { display: flex; }
+  #devBar button {
+    background: rgba(250,243,228,0.1);
+    border: 1px solid rgba(250,243,228,0.25);
+    color: #FAF3E4;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  #devBar button:hover { background: var(--terracotta); border-color: var(--terracotta); }
+  #devBar .dev-tag {
+    color: #C8943A;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    align-self: center;
+    padding-right: 3px;
+  }
+
   .confetti-burst {
     position: fixed;
     inset: 0;
@@ -2658,6 +2697,20 @@
   </div>
 </div>
 
+<!-- Dev jump bar. Hidden unless the URL ends in ?dev — she will never see it. -->
+<div id="devBar">
+  <span class="dev-tag">DEV</span>
+  <button data-go="ask">ask</button>
+  <button data-go="memory">memory</button>
+  <button data-go="map">map</button>
+  <button data-go="map5">map&nbsp;last</button>
+  <button data-go="photo">photos</button>
+  <button data-go="ticket">ticket</button>
+  <button data-go="lock">lock</button>
+  <button data-go="reveal">reveal</button>
+  <button data-go="reload">↻</button>
+</div>
+
 <canvas class="confetti-burst" id="confettiCanvas"></canvas>
 
 <script>
@@ -3011,6 +3064,7 @@ function compassDir(fromLat, fromLon, toLat_, toLon_) {
 }
 
 let mapIdx = 0, mapSolved = false, mapTries = 0, mapDrawn = false;
+let pendingPin = '';   // the answer marker, held back until she gets it
 
 function drawBaseMap() {
   if (mapDrawn) return;
@@ -3035,9 +3089,19 @@ function startMapRound(i) {
   document.getElementById('mapQ').innerHTML = t.q;
   document.getElementById('mapCount').textContent = `${i + 1} / ${MAP_STOPS.length}`;
   document.getElementById('guessLayer').innerHTML = '';
-  document.getElementById('targetRing').classList.remove('show');
-  document.getElementById('targetPin').classList.remove('show');
   document.getElementById('mapContinue').classList.remove('show');
+
+  // Hide the answer with NO transition. Removing .show normally fades out
+  // over half a second — and since the pin has already been repositioned
+  // for this round, that fade would briefly show her the answer.
+  const ring = document.getElementById('targetRing');
+  const pin  = document.getElementById('targetPin');
+  ring.style.transition = 'none';
+  pin.style.transition  = 'none';
+  ring.classList.remove('show');
+  pin.classList.remove('show');
+  pin.innerHTML = '';                 // nothing to leak while hidden
+  void ring.offsetWidth;              // force the browser to apply it now
 
   const fb = document.getElementById('mapFeedback');
   fb.textContent = 'Tap that map.';
@@ -3045,7 +3109,6 @@ function startMapRound(i) {
   document.getElementById('mapTries').textContent = '';
 
   // 75 miles is a different pixel width at each latitude
-  const ring = document.getElementById('targetRing');
   const rx = (WIN_MILES / (69 * Math.cos(t.lat * Math.PI/180))) / (LON_MAX - LON_MIN) * MAP_W;
   const ry = (WIN_MILES / 69) / (LAT_MAX - LAT_MIN) * MAP_H;
   ring.setAttribute('cx', toX(t.lon));
@@ -3058,11 +3121,17 @@ function startMapRound(i) {
   const flip = px < 190;
   const lx = flip ? px + 22 : px - 22;
   const ly = py - 16;
-  document.getElementById('targetPin').innerHTML = `
+  pendingPin = `
     <circle cx="${px}" cy="${py}" r="3" fill="#B85C38" stroke="#FAF3E4" stroke-width="1.2"/>
     <text class="pin-label" x="${lx}" y="${ly}" text-anchor="${flip ? 'start' : 'end'}">${t.name}</text>
     <line x1="${flip ? px + 21 : px - 21}" y1="${py - 19}" x2="${flip ? px + 4 : px - 4}" y2="${py - 5}"
           stroke="#B85C38" stroke-width="0.9" opacity="0.6"/>`;
+
+  // restore the fades on the next frame, ready for the reveal
+  requestAnimationFrame(() => {
+    ring.style.transition = '';
+    pin.style.transition  = '';
+  });
 }
 
 document.getElementById('mapSvg').addEventListener('click', (e) => {
@@ -3087,8 +3156,10 @@ document.getElementById('mapSvg').addEventListener('click', (e) => {
       ? `${Math.round(miles)} miles out. Close enough — ${t.name}. 🌿`
       : `${Math.round(miles)} miles away. ${t.name}. 🌿`;
     fb.className = 'map-feedback win';
+    const pinEl = document.getElementById('targetPin');
+    pinEl.innerHTML = pendingPin;
     document.getElementById('targetRing').classList.add('show');
-    document.getElementById('targetPin').classList.add('show');
+    pinEl.classList.add('show');
     document.getElementById('mapTries').textContent =
       mapTries === 1 ? 'First try' : `${mapTries} guesses`;
 
@@ -3770,6 +3841,62 @@ function revealFinale() {
 
 
 // ── CONFETTI ──
+/* ══════════════════════════════════════════════════════════
+   DEV JUMP BAR
+
+   Add ?dev to the URL to get a bar for jumping straight to any
+   screen while testing. Without it nothing renders and nothing
+   runs, so the live link she opens is unaffected.
+   Example: crovell.github.io/CheckYes/?dev
+   ══════════════════════════════════════════════════════════ */
+(function devTools() {
+  if (!/[?&]dev\b/.test(location.search)) return;
+
+  const bar = document.getElementById('devBar');
+  bar.classList.add('on');
+
+  const SCREENS = ['puzzleScreen','mapScreen','photoScreen',
+                   'scratchScreen','lockScreen','yesScreen'];
+
+  function clearAll() {
+    const ov = document.getElementById('envelope-overlay');
+    ov.style.display = 'none';
+    envelopeOpened = true;
+    const card = document.getElementById('mainCard');
+    card.classList.add('visible');
+    card.style.display = 'none';
+    SCREENS.forEach(id => document.getElementById(id).classList.remove('show'));
+  }
+
+  const GO = {
+    ask() {
+      clearAll();
+      document.getElementById('mainCard').style.display = '';
+      placeNoNearYes();
+    },
+    memory() { clearAll(); document.getElementById('puzzleScreen').classList.add('show'); buildMemoryGame(); },
+    map()    { clearAll(); document.getElementById('mapScreen').classList.add('show');    startMapRound(0); },
+    map5()   { clearAll(); document.getElementById('mapScreen').classList.add('show');    startMapRound(MAP_STOPS.length - 1); },
+    photo()  { clearAll(); document.getElementById('photoScreen').classList.add('show');  startPhotoRound(0); },
+    ticket() { clearAll(); document.getElementById('scratchScreen').classList.add('show'); setTimeout(buildTicket, 40); },
+    lock()   { clearAll(); document.getElementById('lockScreen').classList.add('show');   buildLock(); },
+    reveal() {
+      clearAll();
+      // give the score line something to show when jumping straight here
+      if (photoScore === 0) photoScore = PHOTOS.length * ZOOM_LEVELS.length - 2;
+      finaleDone = false;
+      document.getElementById('yesScreen').classList.add('show');
+      revealFinale();
+    },
+    reload() { location.reload(); },
+  };
+
+  bar.addEventListener('click', (e) => {
+    const key = e.target.getAttribute('data-go');
+    if (key && GO[key]) GO[key]();
+  });
+})();
+
 function launchConfetti() {
   const canvas = document.getElementById('confettiCanvas');
   const ctx = canvas.getContext('2d');
