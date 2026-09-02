@@ -227,6 +227,8 @@
   }
 
   .btn-yes {
+    /* --yes-grow ratchets up every time the No button runs away */
+    --yes-grow: 1;
     background: var(--terracotta);
     color: #fff;
     border: none;
@@ -236,18 +238,24 @@
     font-size: 1.05rem;
     cursor: pointer;
     box-shadow: 0 4px 18px rgba(184,92,56,0.35);
-    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
     position: relative;
     z-index: 20;
     letter-spacing: 0.02em;
     min-width: 180px;
+    transform: scale(var(--yes-grow));
+    /* springy easing so each step lands with a little bounce */
+    transition: transform 0.42s cubic-bezier(.34,1.45,.5,1),
+                box-shadow 0.3s, background 0.15s;
   }
   .btn-yes:hover {
     background: var(--terra-deep);
-    transform: translateY(-2px);
+    transform: scale(calc(var(--yes-grow) * 1.04)) translateY(-2px);
     box-shadow: 0 8px 24px rgba(184,92,56,0.4);
   }
-  .btn-yes:active { transform: scale(0.97); }
+  .btn-yes:active { transform: scale(calc(var(--yes-grow) * 0.97)); }
+
+  /* No stays on top so she can still see what she's chasing */
+  .btn-no { z-index: 26; }
 
   .btn-no {
     background: transparent;
@@ -1756,11 +1764,6 @@
         Void where prohibited. Must be 18 or married to Chris to play.<br>
         Not redeemable for cash. Redeemable only for affection.<br>
         Ticket has no cash value. Please play responsibly.
-        <span class="fine-note">
-          Your number is 12 because that&rsquo;s the anniversary we&rsquo;re about
-          to have. Twelve years, this November 22nd.<br>
-          <b>Not a lucky number. Ours.</b>
-        </span>
       </div>
 
       <div class="barcode" id="barcode"></div>
@@ -2677,7 +2680,7 @@
   <p>I can't wait to celebrate us.</p>
   <p class="final-score" id="finalScore"></p>
   <div class="detail">
-    <div class="detail-header">Your itinerary — October 14th</div>
+    <div class="detail-header">Our itinerary — October 14th</div>
     <div class="detail-body">
       <div class="detail-item">
         <span class="label">Date</span>
@@ -2854,7 +2857,7 @@ function placeNoNearYes() {
   btnNo.style.left = (yr.left + (yr.width / 2) - (noW / 2)) + 'px';
 }
 placeNoNearYes();
-window.addEventListener('resize', placeNoNearYes);
+window.addEventListener('resize', () => { placeNoNearYes(); growYes(); });
 
 function randomEdge() {
   const W = window.innerWidth, H = window.innerHeight;
@@ -2866,11 +2869,33 @@ function randomEdge() {
                   return { x: 10,                              y: Math.random() * (H - bh) };
 }
 
+/* Every dodge feeds the Yes button. Keep chasing No long enough and
+   Yes ends up filling most of the screen, which is the joke.
+   offsetWidth/Height report the UNSCALED box, so the cap maths stays
+   honest no matter how big it has already grown. */
+let yesGrow = 1;
+const GROW_STEP = 0.05;
+const GROW_HARD_CAP = 4.2;
+
+function growYes() {
+  const w = btnYes.offsetWidth  || 180;
+  const h = btnYes.offsetHeight || 48;
+  const cap = Math.min(
+    GROW_HARD_CAP,
+    (window.innerWidth  * 0.94) / w,
+    (window.innerHeight * 0.55) / h
+  );
+  if (yesGrow >= cap) return;
+  yesGrow = Math.min(cap, yesGrow + GROW_STEP);
+  btnYes.style.setProperty('--yes-grow', yesGrow.toFixed(3));
+}
+
 function dodge() {
   const p = randomEdge();
   btnNo.style.transition = 'top 0.18s cubic-bezier(.4,0,.2,1), left 0.18s cubic-bezier(.4,0,.2,1)';
   btnNo.style.top  = p.y + 'px';
   btnNo.style.left = p.x + 'px';
+  growYes();
 }
 
 const FLEE_RADIUS = 100;
@@ -3014,9 +3039,11 @@ document.getElementById('memContinue').addEventListener('click', () => {
 
 /* ── the five places, in the order they happened ── */
 const MAP_STOPS = [
-  { lat: 33.6597, lon: -117.7362, name: 'Irvine Meadows, CA',
+  // Irvine Meadows Amphitheatre — called Verizon Wireless Amphitheater
+  // in 2008, reverted to Irvine Meadows, closed and demolished in 2016.
+  { lat: 33.6375, lon: -117.7497, name: 'Irvine Meadows Amphitheatre',
     q: "The July 2008 concert that led to our first I love you",
-    hint: 'Southern California. Orange County.' },
+    hint: 'Southern California. Orange County — the old amphitheatre off the 5.' },
 
   { lat: 43.6591, lon: -70.2568,  name: 'Portland, Maine',
     q: 'Where we started our honeymoon',
