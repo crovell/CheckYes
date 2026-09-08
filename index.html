@@ -401,16 +401,6 @@
     transition: color 0.2s;
   }
   .value-fine a:hover { color: var(--terracotta); }
-  .final-score {
-    font-size: 0.76rem;
-    font-style: italic;
-    color: var(--sage);
-    margin-top: 0.5rem;
-    opacity: 0;
-    transition: opacity 0.6s;
-  }
-  .final-score.in { opacity: 0.85; }
-
   /* rows appear as the text types into them */
   .detail-item, .detail-note, .detail-header { }
   .detail-body .detail-item { opacity: 0; transform: translateY(6px);
@@ -2667,7 +2657,6 @@
 
   <h2>It's a date,<br><em>lovely.</em></h2>
   <p>I can't wait to celebrate us.</p>
-  <p class="final-score" id="finalScore"></p>
   <div class="detail">
     <div class="detail-header">Our itinerary — October 14th</div>
     <div class="detail-body">
@@ -3803,27 +3792,9 @@ document.getElementById('lockContinue').addEventListener('click', () => {
 
 let finaleDone = false;
 
-function scoreLine() {
-  const max = PHOTOS.length * ZOOM_LEVELS.length;   // 15
-  const s = photoScore;
-  if (s >= max)      return `${s} out of ${max}. Flawless.`;
-  if (s >= max - 2)  return `${s} out of ${max} — you were paying attention.`;
-  if (s >= max - 5)  return `${s} out of ${max}. Not bad at all.`;
-  if (s > 0)         return `${s} out of ${max}. We'll work on it.`;
-  return '';
-}
-
 function revealFinale() {
   if (finaleDone) return;
   finaleDone = true;
-
-  // score line fades in on its own
-  const sc = document.getElementById('finalScore');
-  const line = scoreLine();
-  if (line) {
-    sc.textContent = line;
-    setTimeout(() => sc.classList.add('in'), 700);
-  }
 
   const card = document.querySelector('.yes-screen .detail');
   if (!card) return;
