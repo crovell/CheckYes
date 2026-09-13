@@ -743,6 +743,8 @@
   .ticket {
     position: relative;
     width: min(344px, 90vw);
+    padding-bottom: 9px;        /* clearance for the ::after perforation strip */
+    transform-origin: top center;
     background: #FDF6E7;
     border-radius: 5px;
     box-shadow: 0 10px 32px rgba(46,42,34,0.28);
@@ -753,6 +755,7 @@
   .ticket::before, .ticket::after {
     content: '';
     position: absolute; left: 0; right: 0; height: 5px; z-index: 4;
+    pointer-events: none;
     background-image: radial-gradient(circle at 4px 2.5px, var(--parchment) 2.3px, transparent 2.5px);
     background-size: 8px 5px;
   }
@@ -1016,6 +1019,7 @@
   }
 
   .ticket-fine {
+    overflow-wrap: break-word;
     border-top: 1px dashed rgba(184,92,56,0.3);
     padding: 0.5rem 0.1rem 0.15rem;
     font-size: 0.5rem;
@@ -1759,7 +1763,7 @@
 <div class="puzzle-screen" id="lockScreen">
   <p class="puzzle-step">Challenge five of five</p>
   <h2>A <em>very</em> important date</h2>
-  <p class="puzzle-sub">Turn the wheels until it opens to unlock our date details.</p>
+  <p class="puzzle-sub">Turn the wheels until it opens to unlock our getaway details.</p>
 
   <div class="pips">
     <span class="pip done"></span>
@@ -2658,7 +2662,7 @@
   <h2>It's a date,<br><em>lovely.</em></h2>
   <p>I can't wait to celebrate us.</p>
   <div class="detail">
-    <div class="detail-header">Our itinerary — October 14th</div>
+    <div class="detail-header">Our itinerary</div>
     <div class="detail-body">
       <div class="detail-item">
         <span class="label">Date</span>
@@ -3544,8 +3548,49 @@ function buildTicket() {
   requestAnimationFrame(() => {
     document.querySelectorAll('.panel canvas').forEach(cv => paintCoating(cv));
     bindPanelScratch();
+    fitTicket();              // paint at natural size first, then fit
   });
 }
+
+/* ══════════════════════════════════════════════════════════
+   Keep the whole ticket on screen at any browser zoom.
+
+   Fixed height breakpoints can't cover every zoom level — at
+   150% and up the fine print used to run off the bottom, where
+   the perforation strip painted over it. So instead of guessing,
+   measure what actually overflows and scale the ticket by exactly
+   that much. Nothing is scaled unless it has to be.
+   ══════════════════════════════════════════════════════════ */
+function fitTicket() {
+  const scr = document.getElementById('scratchScreen');
+  const tkt = scr.querySelector('.ticket');
+  if (!tkt || !scr.classList.contains('show')) return;
+
+  // measure unscaled
+  tkt.style.transform = 'none';
+  tkt.style.marginBottom = '';
+  const natural = tkt.offsetHeight;
+  if (!natural) return;
+
+  const over = scr.scrollHeight - scr.clientHeight;
+  if (over <= 2) return;                       // already fits, leave it alone
+
+  // shrink by just enough, with a floor so it never becomes unusable
+  let scale = (natural - over - 10) / natural;
+  scale = Math.max(0.5, Math.min(1, scale));
+  if (scale >= 0.999) return;
+
+  tkt.style.transform = `scale(${scale.toFixed(4)})`;
+  // reclaim the layout space the scaled-off portion leaves behind
+  tkt.style.marginBottom = `${Math.round(-natural * (1 - scale))}px`;
+}
+
+// re-fit when the window or zoom changes
+let _fitTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(_fitTimer);
+  _fitTimer = setTimeout(fitTicket, 120);
+});
 
 function paintCoating(cv) {
   const rect = cv.getBoundingClientRect();
@@ -3622,6 +3667,8 @@ function revealPanel(cv) {
     note.className = 'scratch-note win';
     document.getElementById('prizeBanner').classList.add('show');
     document.getElementById('pipScratch').classList.add('done');
+    // the banner adds height as it expands — re-measure once it has
+    setTimeout(fitTicket, 520);
     setTimeout(() =>
       document.getElementById('scratchContinue').classList.add('show'), 800);
   }
@@ -3633,7 +3680,12 @@ function bindPanelScratch() {
   const dab = (cv, e) => {
     const r = cv.getBoundingClientRect();
     const pt = e.touches ? e.touches[0] : e;
-    const x = pt.clientX - r.left, y = pt.clientY - r.top;
+    // The ticket may be CSS-scaled to fit the window, so a raw pixel
+    // offset is not a canvas coordinate. Normalise through the rect.
+    const dpr = window.devicePixelRatio || 1;
+    const cw = cv.width / dpr, ch = cv.height / dpr;
+    const x = (pt.clientX - r.left) / r.width  * cw;
+    const y = (pt.clientY - r.top)  / r.height * ch;
     const ctx = cv._ctx;
     ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.fill();
     for (let i = 0; i < 3; i++) {
